@@ -47,7 +47,7 @@ AchievementType atype
 go
 
 --eight req
-select * from Teacher
+select FirstName,LastName from Teacher
 full join Grade on Grade.TeacherID = Teacher.ID 
 where TeacherID is null
 go
