@@ -1,4 +1,3 @@
-
 --1st req
 create or alter procedure usp_CreateGrade (@StudentID int,@CourseID int, @TeacherID int, @Grade int, @Comment nvarchar(100) = '')
 as
@@ -47,9 +46,7 @@ begin
 
 	declare @ParticipationRate int
 	select @ParticipationRate = a.ParticipationRate from [dbo].[AchievementType] a where a.ID = @AchievementTypeID
-	select @SumGradePoints = (CAST(@AchievementPoints as decimal) / CAST(@AchievementMaxPoints as decimal)) * CAST(@ParticipationRate as decimal)
-	
-	 
+	select @SumGradePoints = (CAST(@AchievementPoints as decimal) / CAST(@AchievementMaxPoints as decimal)) * CAST(@ParticipationRate as decimal) 
 end
 go
 
@@ -57,5 +54,4 @@ declare @TotalPoints decimal (18,2)
 exec CreateGradeDetails 6, 3 , 98, 100, @TotalPoints OUTPUT
 select @TotalPoints as Total_Grades
 go
-
 
