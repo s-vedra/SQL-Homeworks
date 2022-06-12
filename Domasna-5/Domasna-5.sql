@@ -1,29 +1,24 @@
+
 --1st req
-create or alter procedure usp_CreateGrade (@StudentID int, @TeacherID int)
+create or alter procedure usp_CreateGrade (@StudentID int,@CourseID int, @TeacherID int, @Grade int, @Comment nvarchar(100) = '')
 as
 begin
-	select s.FirstName + ' ' + s.LastName as Student_Name ,count(g.Grade) as Total_Grades from [dbo].[Grade] g
-	join [dbo].[Student] s on g.StudentID = s.ID
-	where s.ID = @StudentID
-	group by s.FirstName + ' ' + s.LastName
+	declare @CreatedDate date
+	select @CreatedDate = GETDATE()
+	insert into [dbo].[Grade]([StudentID],[CourseID],[TeacherID],[Grade],[Comment],[CreatedDate])
+	values(@StudentID,@CourseID,@TeacherID,@Grade,@Comment,@CreatedDate)
 
-	select t.ID, t.FirstName + ' ' + t.LastName as TeacherName, MAX(g.Grade) as MAXTeacherGrade,
-	s.ID,s.FirstName + ' ' + s.LastName as Student_Name, MAX(g.Grade) as MAXStudentGrade
+	select count(g.Grade) as Total_Grades from [dbo].[Grade] g
+	where g.StudentID = @StudentID
+
+
+	select MAX(g.Grade) as MAXGrade
 	from [dbo].[Grade] g
-	join [dbo].[Student] s on s.ID = g.StudentID
-	join [dbo].[Teacher] t on g.TeacherID = t.ID
-	where s.ID = @StudentID AND t.ID = @TeacherID
-	group by t.ID, t.FirstName + ' ' + t.LastName,
-	s.ID,s.FirstName + ' ' + s.LastName
+	where g.StudentID = @StudentID AND g.TeacherID = @TeacherID
 end
 
-exec usp_CreateGrade @TeacherID = 42 ,@StudentID = 254
 
-
-select * from [dbo].[Grade]
-select * from [dbo].[GradeDetails] g
-order by g.GradeID desc
-select * from [dbo].[Student]
+exec usp_CreateGrade @StudentID=2, @CourseID=5, @TeacherID=10, @Grade=6
 go
 
 --2nd req
@@ -33,10 +28,13 @@ create or alter procedure CreateGradeDetails
 	@AchievementTypeID tinyint, 
 	@AchievementPoints tinyint, 
 	@AchievementMaxPoints tinyint = 100, 
-	@AchievementDate date
+	@SumGradePoints decimal (18,2) output
 ) 
 as 
 begin
+	declare @AchievementDate date 
+	select @AchievementDate = GETDATE()
+
 	insert into [dbo].[GradeDetails] (GradeID,AchievementTypeID,AchievementPoints,AchievementMaxPoints,AchievementDate)
 	values 
 	(
@@ -48,24 +46,16 @@ begin
 	)
 
 	declare @ParticipationRate int
-	select @ParticipationRate = COUNT(g.AchievementDate) from [dbo].[GradeDetails] g
-	where g.AchievementDate = @AchievementDate 
-	declare @SumGradePoints decimal
-	select @SumGradePoints = CAST(SUM((@AchievementMaxPoints * @ParticipationRate) / @AchievementPoints) as decimal) from [dbo].[GradeDetails] g
-	where g.ID = @GradeID
-
-	select @GradeID as Grade_Id,@ParticipationRate as Participation_Rate ,@SumGradePoints as SUM_GradePoints
+	select @ParticipationRate = a.ParticipationRate from [dbo].[AchievementType] a where a.ID = @AchievementTypeID
+	select @SumGradePoints = (CAST(@AchievementPoints as decimal) / CAST(@AchievementMaxPoints as decimal)) * CAST(@ParticipationRate as decimal)
+	
 	 
 end
 go
 
-declare @Date date
-select @Date = GETDATE()
-exec CreateGradeDetails 
-@GradeID = 10,
-@AchievementTypeID = 2,
-@AchievementPoints = 52,
-@AchievementDate = @Date
+declare @TotalPoints decimal (18,2)
+exec CreateGradeDetails 6, 3 , 98, 100, @TotalPoints OUTPUT
+select @TotalPoints as Total_Grades
 go
 
 
